@@ -1,0 +1,30 @@
+  .dropzone { max-width: 520px; }
+  .zone {
+    position: relative;
+    display: grid;
+    place-items: center;
+    gap: .25rem;
+    padding: 2.5rem 1.5rem;
+    border: 2px dashed #9aa4b2;
+    border-radius: 12px;
+    font: 500 1rem/1.4 system-ui, sans-serif;
+    color: #1f2937;
+    text-align: center;
+    transition: border-color .2s, background .2s;
+  }
+  /* Make the input fill the area but stay invisible & focusable */
+  #fileInput {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+  .zone:focus-within {
+    outline: 3px solid #93c5fd;
+    outline-offset: 3px;
+  }
+  .zone:hover { background: #f9fafb; border-color: #6b7280; }
+
+  ::-webkit-file-upload-button {
+   display: none;
+    }       

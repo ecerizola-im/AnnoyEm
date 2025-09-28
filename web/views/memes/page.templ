@@ -1,0 +1,20 @@
+package memes
+
+import "github.com/ecerizola-im/AnnoyEm/web/views/memes/components"
+
+templ Memes(message string, memeList templ.Component) {
+	<div>
+    <h1>{message}</h1>
+
+    <section>
+        <h2>Upload a new meme</h2>
+        @components.FileUploadForm()
+    </section>
+    <section>
+        <h2>Your Memes</h2>
+        @memeList
+    </section>
+    </div>
+
+    
+}

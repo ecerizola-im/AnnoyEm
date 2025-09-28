@@ -1,0 +1,16 @@
+package components
+
+import "github.com/ecerizola-im/AnnoyEm/internal/model/meme"
+
+templ MemeList(memes []meme.Meme){
+    <div>
+        <h2>Meme List Component</h2>
+        <ul id="meme-list">
+        for _, meme := range memes {
+            <li>
+                @MemeRow(meme)
+            </li>
+        }
+        </ul>
+    </div>
+}

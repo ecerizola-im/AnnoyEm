@@ -1,0 +1,17 @@
+package components
+
+import "github.com/ecerizola-im/AnnoyEm/internal/model/meme"
+import "fmt"
+
+templ MemeRow(meme meme.Meme){
+    <div>
+        <h2>{ meme.OriginalFileName }</h2>
+        <p>ID: { meme.ID }</p>
+        <p>Date: { meme.CreatedAt.Format("2006-01-02 15:04:05") }</p>
+        <a class="btn-download"
+           href={ fmt.Sprintf("/memes/%d/download", meme.ID) }
+           download={ meme.OriginalFileName }>
+            Download
+        </a>
+    </div>
+}
