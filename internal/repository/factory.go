@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"database/sql"
 	"fmt"
 
 	"github.com/ecerizola-im/AnnoyEm/internal/common"
@@ -12,6 +13,7 @@ import (
 type Config interface {
 	GetRepoType() common.RepositoryType
 	GetPostgresDB() *pgxpool.Pool
+	GetSQLiteDB() *sql.DB
 }
 
 func NewRepository(cfg Config) (memes.Repository, error) {
@@ -23,6 +25,11 @@ func NewRepository(cfg Config) (memes.Repository, error) {
 			return nil, fmt.Errorf("postgres repository requires DB pool")
 		}
 		return implementation.NewPostgresRepository(cfg.GetPostgresDB()), nil
+	case common.TypeSQLite:
+		if cfg.GetSQLiteDB() == nil {
+			return nil, fmt.Errorf("sqlite repository requires DB connection")
+		}
+		return implementation.NewSQLiteRepository(cfg.GetSQLiteDB()), nil
 	default:
 		return nil, fmt.Errorf("unknown repository type %q", cfg.GetRepoType())
 	}

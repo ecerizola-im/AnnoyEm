@@ -3,6 +3,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
@@ -15,6 +16,8 @@ import (
 	"github.com/ecerizola-im/AnnoyEm/internal/storage"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	_ "modernc.org/sqlite"
 )
 
 func main() {
@@ -27,12 +30,12 @@ func main() {
 		log.Fatalf("failed to get repository config: %v", err)
 	}
 
-	defer repoConfig.CleanResources()
-
 	repo, err := repository.NewRepository(repoConfig)
 	if err != nil {
 		log.Fatalf("failed to create repository: %v", err)
 	}
+
+	defer repo.Cleanup()
 
 	//uploadsDir := configureStorageSettings()
 
@@ -65,6 +68,8 @@ func getRepoConfig(c config.Config) (*config.RepositoryConfig, error) {
 		return &config.RepositoryConfig{Type: common.TypeMemory}, nil
 	case common.TypePostgres:
 		return &config.RepositoryConfig{Type: common.TypePostgres, Postgres: configureDbPool(c)}, nil
+	case common.TypeSQLite:
+		return &config.RepositoryConfig{Type: common.TypeSQLite, SQLite: configureSQLiteDB(c)}, nil
 	default:
 		return nil, fmt.Errorf("unknown repository type: %v", c.RepoType)
 	}
@@ -78,4 +83,12 @@ func configureDbPool(c config.Config) *pgxpool.Pool {
 		log.Fatalf("Unable to create connection pool: %v\n", err)
 	}
 	return dbpool
+}
+
+func configureSQLiteDB(c config.Config) *sql.DB {
+	db, err := sql.Open("sqlite", c.EmbeddedDatabase)
+	if err != nil {
+		log.Fatalf("Unable to create SQLite connection: %v\n", err)
+	}
+	return db
 }

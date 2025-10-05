@@ -23,26 +23,26 @@ func (r *MemoryRepository) Create(ctx context.Context, meme *memes.Meme) (int64,
 
 	newMemeId := r.maxID + 1
 
-	receiptCopy := *meme
-	receiptCopy.ID = newMemeId
-	r.data[newMemeId] = &receiptCopy
+	memeCopy := *meme
+	memeCopy.ID = newMemeId
+	r.data[newMemeId] = &memeCopy
 	r.maxID = newMemeId
 
 	return newMemeId, nil
 }
 
 func (r *MemoryRepository) FindByID(id int64) (*memes.Meme, error) {
-	receipt, exists := r.data[id]
+	meme, exists := r.data[id]
 	if !exists {
-		return nil, fmt.Errorf("receipt not found")
+		return nil, fmt.Errorf("meme not found")
 	}
-	return receipt, nil
+	return meme, nil
 }
 
 func (r *MemoryRepository) List() ([]memes.Meme, error) {
 	memesList := make([]memes.Meme, 0, len(r.data))
-	for _, receipt := range r.data {
-		memesList = append(memesList, *receipt)
+	for _, meme := range r.data {
+		memesList = append(memesList, *meme)
 	}
 	return memesList, nil
 }
@@ -50,7 +50,7 @@ func (r *MemoryRepository) List() ([]memes.Meme, error) {
 func (r *MemoryRepository) Delete(ctx context.Context, id int64) error {
 	_, exists := r.data[id]
 	if !exists {
-		return fmt.Errorf("receipt not found")
+		return fmt.Errorf("meme not found")
 	}
 	delete(r.data, id)
 	return nil
@@ -63,4 +63,8 @@ func (r *MemoryRepository) Update(ctx context.Context, meme *memes.Meme) error {
 	}
 	r.data[meme.ID] = meme
 	return nil
+}
+
+func (r *MemoryRepository) Cleanup() {
+
 }

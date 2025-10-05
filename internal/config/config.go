@@ -20,6 +20,7 @@ type DatabaseConfig struct {
 type Config struct {
 	Port             string
 	ConnectionString string
+	EmbeddedDatabase string
 	RepoType         common.RepositoryType
 	MaxUploadBytes   int64
 	UploadsDir       string
@@ -29,8 +30,9 @@ type Config struct {
 func Load() Config {
 	c := Config{
 		Port:             "8080",
-		ConnectionString: LoadDatabaseConfig(),
-		RepoType:         common.TypePostgres,
+		ConnectionString: LoadClientServerDatabaseConfig(),
+		RepoType:         common.TypeSQLite,
+		EmbeddedDatabase: "F:\\database\\annoyem.db",
 		MaxUploadBytes:   10 << 20,
 		UploadsDir:       filepath.Join(".", "data", "receipts"),
 		Storage: StorageConfig{
@@ -64,7 +66,7 @@ func Load() Config {
 	return c
 }
 
-func LoadDatabaseConfig() string {
+func LoadClientServerDatabaseConfig() string {
 
 	c := DatabaseConfig{
 		URL:      "localhost",

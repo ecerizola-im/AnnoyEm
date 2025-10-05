@@ -5,4 +5,5 @@ type RepositoryType string
 const (
 	TypeMemory   RepositoryType = "memory"
 	TypePostgres RepositoryType = "postgres"
+	TypeSQLite   RepositoryType = "sqlite"
 )

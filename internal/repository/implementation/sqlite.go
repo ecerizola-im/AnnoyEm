@@ -2,26 +2,25 @@ package implementation
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"time"
 
 	"github.com/ecerizola-im/AnnoyEm/internal/memes"
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type PostgresRepository struct {
-	db *pgxpool.Pool
+type SQLiteRepository struct {
+	db *sql.DB
 }
 
-func NewPostgresRepository(db *pgxpool.Pool) *PostgresRepository {
-	return &PostgresRepository{db: db}
+func NewSQLiteRepository(db *sql.DB) *SQLiteRepository {
+	return &SQLiteRepository{db: db}
 }
 
-func (r *PostgresRepository) Create(ctx context.Context, meme *memes.Meme) (int64, error) {
+func (r *SQLiteRepository) Create(ctx context.Context, meme *memes.Meme) (int64, error) {
 	const q = `
-        INSERT INTO memes.meme (user_id, original_file_name, mime_type, size_bytes, uuid, upload_status_id,
+        INSERT INTO meme (user_id, original_file_name, mime_type, size_bytes, uuid, upload_status_id,
 			   category, created_at, processed_at, updated_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         RETURNING id`
@@ -31,7 +30,7 @@ func (r *PostgresRepository) Create(ctx context.Context, meme *memes.Meme) (int6
 	meme.UpdatedAt = now
 
 	var id int64
-	err := r.db.QueryRow(ctx, q,
+	err := r.db.QueryRow(q,
 		meme.UserID,
 		meme.OriginalFileName,
 		meme.MimeType,
@@ -49,13 +48,13 @@ func (r *PostgresRepository) Create(ctx context.Context, meme *memes.Meme) (int6
 	return id, nil
 }
 
-func (r *PostgresRepository) FindByID(id int64) (*memes.Meme, error) {
+func (r *SQLiteRepository) FindByID(id int64) (*memes.Meme, error) {
 	const q = `
         SELECT id, user_id, original_file_name, mime_type, size_bytes, uuid, upload_status_id,
 			   category, created_at, processed_at, updated_at
-        FROM memes.meme
+        FROM meme
         WHERE id = $1`
-	row := r.db.QueryRow(context.Background(), q, id)
+	row := r.db.QueryRow(q, id)
 
 	var rec memes.Meme
 	err := row.Scan(
@@ -71,7 +70,7 @@ func (r *PostgresRepository) FindByID(id int64) (*memes.Meme, error) {
 		&rec.ProcessedAt,
 		&rec.UpdatedAt,
 	)
-	if errors.Is(err, pgx.ErrNoRows) {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
 	if err != nil {
@@ -80,13 +79,13 @@ func (r *PostgresRepository) FindByID(id int64) (*memes.Meme, error) {
 	return &rec, nil
 }
 
-func (r *PostgresRepository) List() ([]memes.Meme, error) {
+func (r *SQLiteRepository) List() ([]memes.Meme, error) {
 	const q = `
         SELECT id, user_id, original_file_name, mime_type, size_bytes, uuid, upload_status_id,
 			   category, created_at, processed_at, updated_at
-        FROM memes.meme
+        FROM meme
         ORDER BY created_at DESC`
-	rows, err := r.db.Query(context.Background(), q)
+	rows, err := r.db.Query(q)
 	if err != nil {
 		return nil, fmt.Errorf("list meme: %w", err)
 	}
@@ -118,22 +117,22 @@ func (r *PostgresRepository) List() ([]memes.Meme, error) {
 	return out, nil
 }
 
-func (r *PostgresRepository) Delete(ctx context.Context, id int64) error {
-	const q = `DELETE FROM memes.meme WHERE id = $1`
-	if _, err := r.db.Exec(ctx, q, id); err != nil {
+func (r *SQLiteRepository) Delete(ctx context.Context, id int64) error {
+	const q = `DELETE FROM meme WHERE id = $1`
+	if _, err := r.db.Exec(q, id); err != nil {
 		return fmt.Errorf("delete meme: %w", err)
 	}
 	return nil
 }
 
-func (r *PostgresRepository) Update(ctx context.Context, rec *memes.Meme) error {
+func (r *SQLiteRepository) Update(ctx context.Context, rec *memes.Meme) error {
 	rec.UpdatedAt = nowUTC()
 	const q = `
-        UPDATE memes.meme
+        UPDATE meme
         SET user_id = $1, original_file_name = $2, mime_type = $3, size_bytes = $4, uuid = $5, upload_status_id = $6,
 			category = $7, created_at = $8, processed_at = $9, updated_at = $10
         WHERE id = $11`
-	_, err := r.db.Exec(ctx, q,
+	_, err := r.db.Exec(q,
 		rec.UserID,
 		rec.OriginalFileName,
 		rec.MimeType,
@@ -152,10 +151,6 @@ func (r *PostgresRepository) Update(ctx context.Context, rec *memes.Meme) error 
 	return nil
 }
 
-func nowUTC() time.Time {
-	return time.Now().UTC()
-}
-
-func (r *PostgresRepository) Cleanup() {
+func (r *SQLiteRepository) Cleanup() {
 	r.db.Close()
 }
