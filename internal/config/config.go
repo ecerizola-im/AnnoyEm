@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/ecerizola-im/AnnoyEm/internal/memes/repository"
+	"github.com/ecerizola-im/AnnoyEm/internal/common"
 )
 
 type DatabaseConfig struct {
@@ -20,18 +20,24 @@ type DatabaseConfig struct {
 type Config struct {
 	Port             string
 	ConnectionString string
-	RepoType         repository.Type
+	RepoType         common.RepositoryType
 	MaxUploadBytes   int64
 	UploadsDir       string
+	Storage          StorageConfig
 }
 
 func Load() Config {
 	c := Config{
 		Port:             "8080",
 		ConnectionString: LoadDatabaseConfig(),
-		RepoType:         repository.TypePostgres,
+		RepoType:         common.TypePostgres,
 		MaxUploadBytes:   10 << 20,
 		UploadsDir:       filepath.Join(".", "data", "receipts"),
+		Storage: StorageConfig{
+			Type:                 "azure_blob",
+			ContainerName:        "memes",
+			LocalStorageBasePath: filepath.Join(".", "data", "uploads"),
+		},
 	}
 
 	if v := os.Getenv("AnnoyEm_PORT"); v != "" {
@@ -41,9 +47,9 @@ func Load() Config {
 	if v := os.Getenv("AnnoyEm_REPO_TYPE"); v != "" {
 		switch strings.ToLower(v) {
 		case "memory":
-			c.RepoType = repository.TypeMemory
+			c.RepoType = common.TypeMemory
 		case "postgres":
-			c.RepoType = repository.TypePostgres
+			c.RepoType = common.TypePostgres
 		}
 	}
 

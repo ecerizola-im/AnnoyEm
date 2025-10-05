@@ -7,15 +7,16 @@ import (
 	"time"
 
 	memeModel "github.com/ecerizola-im/AnnoyEm/internal/model/meme"
+	"github.com/ecerizola-im/AnnoyEm/internal/storage"
 )
 
 type MemeService struct {
 	repository Repository
-	storage    Storage
+	storage    storage.Storage
 	now        func() time.Time
 }
 
-func NewMemeService(repository Repository, storage Storage) *MemeService {
+func NewMemeService(repository Repository, storage storage.Storage) *MemeService {
 	return &MemeService{
 		repository: repository,
 		storage:    storage,

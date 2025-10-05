@@ -1,4 +1,4 @@
-package memes
+package storage
 
 import (
 	"context"

@@ -3,16 +3,16 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
-	"os"
-	"path/filepath"
 
 	"github.com/ecerizola-im/AnnoyEm/internal/app"
+	"github.com/ecerizola-im/AnnoyEm/internal/common"
 	"github.com/ecerizola-im/AnnoyEm/internal/config"
 	"github.com/ecerizola-im/AnnoyEm/internal/memes"
-	"github.com/ecerizola-im/AnnoyEm/internal/memes/repository"
-	"github.com/ecerizola-im/AnnoyEm/internal/memes/storage"
+	"github.com/ecerizola-im/AnnoyEm/internal/repository"
+	"github.com/ecerizola-im/AnnoyEm/internal/storage"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -21,11 +21,13 @@ func main() {
 
 	config := config.Load()
 	//DB
-	repoConfig := getRepoConfig(config)
+	repoConfig, err := getRepoConfig(config)
 
-	if config.RepoType == repository.TypePostgres {
-		defer repoConfig.DB.Close()
+	if err != nil {
+		log.Fatalf("failed to get repository config: %v", err)
 	}
+
+	defer repoConfig.CleanResources()
 
 	repo, err := repository.NewRepository(repoConfig)
 	if err != nil {
@@ -34,13 +36,10 @@ func main() {
 
 	//uploadsDir := configureStorageSettings()
 
-	storeConfig := storage.AzureBlobConfig{ContainerName: "memes"}
-
-	store, err := storage.NewAzureBlobStorage(storeConfig)
+	store, err := storage.CreateStorage(config.Storage)
 	if err != nil {
-		log.Fatalf("failed to create Azure Blob storage: %v", err)
+		log.Fatalf("failed to create local storage: %v", err)
 	}
-	// store := storage.NewLocalStorage(uploadsDir)
 
 	// Service
 	svc := memes.NewMemeService(repo, store)
@@ -59,13 +58,16 @@ func main() {
 	log.Fatal(http.ListenAndServe(":8080", app.LoggingMiddleware(mux)))
 }
 
-func getRepoConfig(c config.Config) repository.Config {
+func getRepoConfig(c config.Config) (*config.RepositoryConfig, error) {
 
-	repoConfig := repository.Config{
-		Type: c.RepoType,
-		DB:   configureDbPool(c),
+	switch c.RepoType {
+	case common.TypeMemory:
+		return &config.RepositoryConfig{Type: common.TypeMemory}, nil
+	case common.TypePostgres:
+		return &config.RepositoryConfig{Type: common.TypePostgres, Postgres: configureDbPool(c)}, nil
+	default:
+		return nil, fmt.Errorf("unknown repository type: %v", c.RepoType)
 	}
-	return repoConfig
 }
 
 func configureDbPool(c config.Config) *pgxpool.Pool {
@@ -76,13 +78,4 @@ func configureDbPool(c config.Config) *pgxpool.Pool {
 		log.Fatalf("Unable to create connection pool: %v\n", err)
 	}
 	return dbpool
-}
-
-func configureStorageSettings() string {
-	// Where to store uploaded files locally
-	uploadsDir := filepath.Join(".", "data", "receipts")
-	if err := os.MkdirAll(uploadsDir, 0o755); err != nil {
-		log.Fatalf("failed to create uploads dir: %v", err)
-	}
-	return uploadsDir
 }
