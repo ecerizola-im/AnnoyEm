@@ -19,10 +19,13 @@ func NewLocalStorage(basePath string) *LocalStorage {
 	return &LocalStorage{BasePath: basePath}
 }
 
-func (s *LocalStorage) Save(ctx context.Context, data io.Reader) (string, error) {
+func (s *LocalStorage) Save(ctx context.Context, data io.Reader, fileName string) (string, error) {
 
-	fileId := uuid.NewString()
-	filePath := s.BasePath + "/" + fileId
+	if fileName == "" {
+		fileName = uuid.NewString()
+	}
+
+	filePath := s.BasePath + "/" + fileName
 	newFile, err := os.Create(filePath)
 
 	if err != nil {
@@ -36,7 +39,7 @@ func (s *LocalStorage) Save(ctx context.Context, data io.Reader) (string, error)
 		return "", err
 	}
 
-	return fileId, nil
+	return fileName, nil
 }
 
 func (s *LocalStorage) Delete(ctx context.Context, fileName string) error {

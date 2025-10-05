@@ -53,18 +53,20 @@ func NewAzureBlobStorage(config AzureBlobConfig) (*AzureBlobStorage, error) {
 	}, nil
 }
 
-func (s *AzureBlobStorage) Save(ctx context.Context, data io.Reader) (string, error) {
+func (s *AzureBlobStorage) Save(ctx context.Context, data io.Reader, fileName string) (string, error) {
 	// Upload to data to blob storage
+	if fileName == "" {
+		fileName = uuid.NewString()
+	}
 
-	uuid := uuid.NewString()
-	_, err := s.client.UploadStream(ctx, s.container, uuid, data, &azblob.UploadStreamOptions{})
+	_, err := s.client.UploadStream(ctx, s.container, fileName, data, &azblob.UploadStreamOptions{})
 
 	if err != nil {
 		handleError(err)
 		return "", err
 	}
 
-	return uuid, nil
+	return fileName, nil
 }
 
 func (s *AzureBlobStorage) Delete(ctx context.Context, fileName string) error {

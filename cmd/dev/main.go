@@ -37,8 +37,6 @@ func main() {
 
 	defer repo.Cleanup()
 
-	//uploadsDir := configureStorageSettings()
-
 	store, err := storage.CreateStorage(config.Storage)
 	if err != nil {
 		log.Fatalf("failed to create local storage: %v", err)
@@ -86,9 +84,27 @@ func configureDbPool(c config.Config) *pgxpool.Pool {
 }
 
 func configureSQLiteDB(c config.Config) *sql.DB {
-	db, err := sql.Open("sqlite", c.EmbeddedDatabase)
+
+	dsn := "file:" + c.EmbeddedDatabase +
+		"?_pragma=foreign_keys(ON)," +
+		"busy_timeout(5000)," +
+		"journal_mode(WAL)," +
+		"synchronous(NORMAL)," +
+		"cache_size(-40000)"
+
+	db, err := sql.Open("sqlite", dsn)
 	if err != nil {
-		log.Fatalf("Unable to create SQLite connection: %v\n", err)
+		log.Fatalf("Unable to create SQLite connection: %v", err)
 	}
+
+	db.SetMaxOpenConns(10)
+	db.SetMaxIdleConns(10)
+	db.SetConnMaxLifetime(0)
+
+	if err := db.Ping(); err != nil {
+		log.Fatalf("Failed to connect to SQLite database: %v", err)
+	}
+
+	log.Printf("SQLite database initialized at %s (WAL mode enabled)\n", c.EmbeddedDatabase)
 	return db
 }

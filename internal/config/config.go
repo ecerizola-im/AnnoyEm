@@ -32,7 +32,7 @@ func Load() Config {
 		Port:             "8080",
 		ConnectionString: LoadClientServerDatabaseConfig(),
 		RepoType:         common.TypeSQLite,
-		EmbeddedDatabase: "F:\\database\\annoyem.db",
+		EmbeddedDatabase: os.Getenv("AnnoyEm_EMBEDDED_DB_PATH"),
 		MaxUploadBytes:   10 << 20,
 		UploadsDir:       filepath.Join(".", "data", "receipts"),
 		Storage: StorageConfig{

@@ -6,7 +6,7 @@ import (
 )
 
 type Storage interface {
-	Save(ctx context.Context, data io.Reader) (string, error)
+	Save(ctx context.Context, data io.Reader, fileName string) (string, error)
 	Delete(ctx context.Context, fileName string) error
 	Get(ctx context.Context, fileName string) (io.ReadCloser, error)
 }
